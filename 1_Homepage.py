@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase import create_client
-from misc_functions import is_valid_email, new_verified_user
+from misc_functions import is_valid_email, new_verified_user,unread_template, applied_template, ignored_template
 from gotrue.errors import AuthApiError
 from concurrent.futures import ThreadPoolExecutor
 
@@ -29,6 +29,13 @@ with st.expander('About this App'):
 if 'email' not in st.session_state:
     st.session_state['email'] = " "
 
+# Define function to run queries in parallel
+def run_query(status, tag=None):
+    query = supabase.table("users_opportunities").select("*").eq("email", email).eq("status", status)
+    if tag:
+        query = query.eq("tag", tag)
+    query = query.order("created_at", desc=True)
+    return query.execute()
 
 # If user is not logged in, show Register/Login/Forgot Password tabs
 if st.session_state['email'] == " ":
@@ -82,3 +89,82 @@ if st.session_state['email'] == " ":
                             future = executor.submit(new_verified_user,email_id)
                             future.result()
                     st.rerun()
+
+
+else:
+    m = st.markdown("""
+    <style>
+    div.stButton > button:first-child {
+        background-color: rgb(204, 49, 49);
+        width: 100%; /* Default to full width */
+        max-width: 700px; /* Maximum width */
+        padding: 10px 20px;
+        border: none;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 12px;
+    }
+    </style>""", unsafe_allow_html=True)
+
+    email = st.session_state['email']
+
+    tab1, tab2, tab3 = st.tabs(["Unread", "Applied", "UnInterested"])
+
+    with ThreadPoolExecutor() as executor:
+        # Unread tab
+        with tab1:
+            option = st.selectbox(
+                "Type of opportunity",
+                ("All", "Only from BVRIT", "Hackathons/Competitions", "Jobs/Internships"), key="tab1")
+            
+            if option == "All":
+                future = executor.submit(run_query, "unread")
+            elif option == "Only from BVRIT":
+                future = executor.submit(run_query, "unread", "BVRIT")
+            elif option == "Hackathons/Competitions":
+                future = executor.submit(run_query, "unread", "Hackathon/Competition")
+            elif option == "Jobs/Internships":
+                future = executor.submit(run_query, "unread", "Jobs/Internships")
+
+            rows = future.result()
+            unread_template(rows)
+
+        # Applied tab
+        with tab2:
+            option = st.selectbox(
+                "Type of opportunity",
+                ("All", "Only from BVRIT", "Hackathons/Competitions", "Jobs/Internships"), key="tab2")
+            
+            if option == "All":
+                future = executor.submit(run_query, "applied")
+            elif option == "Only from BVRIT":
+                future = executor.submit(run_query, "applied", "BVRIT")
+            elif option == "Hackathons/Competitions":
+                future = executor.submit(run_query, "applied", "Hackathon/Competition")
+            elif option == "Jobs/Internships":
+                future = executor.submit(run_query, "applied", "Jobs/Internships")
+
+            rows = future.result()
+            applied_template(rows)
+
+        # UnInterested tab
+        with tab3:
+            option = st.selectbox(
+                "Type of opportunity",
+                ("All", "Only from BVRIT", "Hackathons/Competitions", "Jobs/Internships"), key="tab3")
+            
+            if option == "All":
+                future = executor.submit(run_query, "ignored")
+            elif option == "Only from BVRIT":
+                future = executor.submit(run_query, "ignored", "BVRIT")
+            elif option == "Hackathons/Competitions":
+                future = executor.submit(run_query, "ignored", "Hackathon/Competition")
+            elif option == "Jobs/Internships":
+                future = executor.submit(run_query, "ignored", "Jobs/Internships")
+
+            rows = future.result()
+            ignored_template(rows)
