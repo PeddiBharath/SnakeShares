@@ -92,6 +92,12 @@ if st.session_state['email'] == " ":
 
 
 else:
+    with st.sidebar:
+        logout = st.button("Logout")
+        if logout:
+            supabase.auth.sign_out()
+            st.session_state['email'] = " "
+            st.rerun()
     m = st.markdown("""
     <style>
     div.stButton > button:first-child {
