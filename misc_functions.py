@@ -31,7 +31,7 @@ def new_verified_user(email):
 
         #resend broadcast
         params: resend.Contacts.CreateParams = {
-            "email": st.session_state['email'],
+            "email": email,
             "audience_id": audience_id,
         }
         resend.Contacts.create(params)

@@ -53,9 +53,10 @@ if st.session_state['admin']==" ":
                         try:
                             if (ph.verify(hashed_password, password)):
                                 st.session_state['admin']="Authenticated"
-                            st.rerun()
                         except Exception as e:
                             st.warning("You might not be Peddi Bharath")
+                        if(st.session_state['admin']=="Authenticated"):
+                            st.rerun()
                         
                 
 if st.session_state['admin']=="Authenticated":

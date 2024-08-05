@@ -88,7 +88,7 @@ if st.session_state['email'] == " ":
                         if not st.session_state['email']==" ":
                             future = executor.submit(new_verified_user,email_id)
                             future.result()
-                    st.rerun()
+                            st.rerun()
 
 
 else:
